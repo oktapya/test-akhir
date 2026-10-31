@@ -34,18 +34,13 @@ class _PageEditSiswaState extends State<PageEditSiswa> {
   void initState() {
     super.initState();
 
-    nipdController.text =
-        widget.siswa['nipd']?.toString() ?? '';
+    final jk = widget.siswa['jenis_kelamin']?.toString();
 
-    namaController.text =
-        widget.siswa['nama_lengkap']?.toString() ?? '';
-
-    alamatController.text =
-        widget.siswa['alamat']?.toString() ?? '';
-
-    jenisKelamin = widget.siswa['jenis_kelamin']?.toString();
-    kelas = widget.siswa['kelas']?.toString();
-    jurusan = widget.siswa['jurusan']?.toString();
+    jenisKelamin = jk == 'L'
+        ? 'Laki-laki'
+        : jk == 'P'
+        ? 'Perempuan'
+        : jk;
   }
 
   @override
@@ -259,10 +254,6 @@ class _PageEditSiswaState extends State<PageEditSiswa> {
 
                     DropdownButtonFormField<String>(
                       value: jenisKelamin,
-                      decoration: dekorasi(
-                        'Jenis Kelamin',
-                        Icons.wc_rounded,
-                      ),
                       items: const [
                         DropdownMenuItem(
                           value: 'Laki-laki',
@@ -274,7 +265,9 @@ class _PageEditSiswaState extends State<PageEditSiswa> {
                         ),
                       ],
                       onChanged: (value) {
-                        setState(() => jenisKelamin = value);
+                        setState(() {
+                          jenisKelamin = value!;
+                        });
                       },
                     ),
 
