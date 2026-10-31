@@ -1,3 +1,4 @@
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -6,10 +7,39 @@ class SiswaServer {
   static const String baseUrl =
       'http://localhost:3000/api/siswa';
 
+  static const String loginUrl =
+      'http://localhost:3000/api/login';
+
   static Map<String, String> get headers => {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   };
+
+  // POST: Login Admin
+  static Future<bool> login(String email, String password) async {
+    final response = await http.post(
+      Uri.parse(loginUrl),
+      headers: headers,
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    final hasil = jsonDecode(response.body);
+
+    if (response.statusCode == 200 && hasil['status'] == true) {
+      return true;
+    }
+
+    if (response.statusCode == 401) {
+      return false;
+    }
+
+    throw Exception(
+      hasil['message'] ?? 'Gagal menghubungi server',
+    );
+  }
 
   // GET: Mengambil semua data siswa
   static Future<List<dynamic>> ambilData() async {
@@ -26,7 +56,8 @@ class SiswaServer {
 
     final hasil = jsonDecode(response.body);
 
-    if (hasil is Map && hasil['status'] == true &&
+    if (hasil is Map &&
+        hasil['status'] == true &&
         hasil['data'] is List) {
       return List<dynamic>.from(hasil['data']);
     }

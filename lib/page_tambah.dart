@@ -306,19 +306,19 @@ class _PageTambahSiswaState extends State<PageTambahSiswa> {
                       ),
                       items: const [
                         DropdownMenuItem(
-                          value: 'RPL',
+                          value: 'Rekayasa Perangkat Lunak',
                           child: Text('Rekayasa Perangkat Lunak (RPL)'),
                         ),
                         DropdownMenuItem(
-                          value: 'TKJ',
+                          value: 'Teknik Komputer dan Jaringan',
                           child: Text('Teknik Komputer dan Jaringan (TKJ)'),
                         ),
                         DropdownMenuItem(
-                          value: 'AKL',
-                          child: Text('Akuntansi (AKL)'),
+                          value: 'Akuntansi',
+                          child: Text('Akuntansi (AK)'),
                         ),
                         DropdownMenuItem(
-                          value: 'BIDI',
+                          value: 'Bisnis Digital',
                           child: Text('Bisnis Digital (BIDI)'),
                         ),
                       ],

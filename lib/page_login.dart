@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'page_data_siswa.dart';
+import 'server/server.dart';
 
 class PageLogin extends StatefulWidget {
   const PageLogin({super.key});
@@ -13,12 +15,13 @@ class _PageLoginState extends State<PageLogin> {
   final TextEditingController passwordController = TextEditingController();
 
   bool passwordVisible = false;
+  bool isLoading = false;
 
   final Color biru = const Color(0xFF4263A8);
   final Color ungu = const Color(0xFF7964C8);
   final Color background = const Color(0xFFE8E9FF);
 
-  void masuk() {
+  Future<void> masuk() async {
     if (emailController.text.trim().isEmpty ||
         passwordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -30,12 +33,49 @@ class _PageLoginState extends State<PageLogin> {
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const PageDataSiswa(),
-      ),
-    );
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      bool berhasil = await SiswaServer.login(
+        emailController.text.trim(),
+        passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      if (berhasil) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PageDataSiswa(),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Email atau password salah!'),
+            backgroundColor: Color(0xFFE05260),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal menghubungi server!'),
+          backgroundColor: Color(0xFFE05260),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -51,14 +91,14 @@ class _PageLoginState extends State<PageLogin> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              const Color(0xFF5378C9),
-              const Color(0xFF7163C8),
-              const Color(0xFF9678D8),
+              Color(0xFF5378C9),
+              Color(0xFF7163C8),
+              Color(0xFF9678D8),
             ],
           ),
         ),
@@ -261,18 +301,24 @@ class _PageLoginState extends State<PageLogin> {
                             width: double.infinity,
                             height: 55,
                             child: ElevatedButton(
-                              onPressed: masuk,
+                              onPressed: isLoading ? null : masuk,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: biru,
                                 foregroundColor: Colors.white,
                                 elevation: 4,
-                                shadowColor: biru.withValues(alpha: 0.35),
+                                shadowColor:
+                                biru.withValues(alpha: 0.35),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(15),
                                 ),
                               ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              child: isLoading
+                                  ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                                  : const Row(
+                                mainAxisAlignment:
+                                MainAxisAlignment.center,
                                 children: [
                                   Text(
                                     'Masuk Sekarang',

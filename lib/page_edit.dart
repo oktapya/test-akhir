@@ -325,20 +325,20 @@ class _PageEditSiswaState extends State<PageEditSiswa> {
                       ),
                       items: const [
                         DropdownMenuItem(
-                          value: 'RPL',
+                          value: 'Rekayasa Perangkat Lunak',
                           child: Text('Rekayasa Perangkat Lunak (RPL)'),
                         ),
                         DropdownMenuItem(
-                          value: 'TKJ',
+                          value: 'Teknik Komputer dan Jaringan ',
                           child: Text('Teknik Komputer dan Jaringan (TKJ)'),
                         ),
                         DropdownMenuItem(
-                          value: 'AKL',
-                          child: Text('Akuntansi (AKL)'),
+                          value: 'Akuntansi',
+                          child: Text('Akuntansi (AK)'),
                         ),
                         DropdownMenuItem(
-                          value: 'OTKP',
-                          child: Text('OTKP'),
+                          value: 'Bisnis Digital',
+                          child: Text('Bisnis Digital (BIDI)'),
                         ),
                       ],
                       onChanged: (value) {
