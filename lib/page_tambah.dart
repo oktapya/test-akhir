@@ -14,28 +14,39 @@ class _PageTambahSiswaState extends State<PageTambahSiswa> {
   final nipdController = TextEditingController();
   final namaController = TextEditingController();
   final alamatController = TextEditingController();
-  final kelasController = TextEditingController();
-  final jurusanController = TextEditingController();
 
-  String jenisKelamin = 'Laki-laki';
-  bool menyimpan = false;
+  String? jenisKelamin;
+  String? kelas;
+  String? jurusan;
+
+  bool loading = false;
+
+  static const Color biru = Color(0xFF4263A8);
+  static const Color ungu = Color(0xFF7964C8);
+  static const Color latar = Color(0xFFE8E9FF);
 
   @override
   void dispose() {
     nipdController.dispose();
     namaController.dispose();
     alamatController.dispose();
-    kelasController.dispose();
-    jurusanController.dispose();
     super.dispose();
   }
 
   Future<void> simpanData() async {
     if (!formKey.currentState!.validate()) return;
 
-    setState(() {
-      menyimpan = true;
-    });
+    if (jenisKelamin == null || kelas == null || jurusan == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Lengkapi jenis kelamin, kelas, dan jurusan!'),
+          backgroundColor: Color(0xFFD94355),
+        ),
+      );
+      return;
+    }
+
+    setState(() => loading = true);
 
     try {
       await SiswaServer.tambahData({
@@ -43,16 +54,16 @@ class _PageTambahSiswaState extends State<PageTambahSiswa> {
         'nama_lengkap': namaController.text.trim(),
         'jenis_kelamin': jenisKelamin,
         'alamat': alamatController.text.trim(),
-        'kelas': kelasController.text.trim(),
-        'jurusan': jurusanController.text.trim(),
+        'kelas': kelas,
+        'jurusan': jurusan,
       });
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Data siswa berhasil ditambahkan'),
-          backgroundColor: Colors.green,
+          content: Text('Data siswa berhasil ditambahkan!'),
+          backgroundColor: biru,
         ),
       );
 
@@ -63,43 +74,52 @@ class _PageTambahSiswaState extends State<PageTambahSiswa> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal menambahkan data: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFD94355),
         ),
       );
     } finally {
       if (mounted) {
-        setState(() {
-          menyimpan = false;
-        });
+        setState(() => loading = false);
       }
     }
   }
 
-  Widget kolomInput({
-    required String label,
-    required TextEditingController controller,
-    required IconData icon,
-  }) {
+  InputDecoration dekorasi(String label, IconData ikon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(ikon, color: biru),
+      filled: true,
+      fillColor: const Color(0xFFDDE5FF),
+      labelStyle: const TextStyle(color: Color(0xFF53618C)),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 17,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFC4D1FF)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: biru, width: 2),
+      ),
+    );
+  }
+
+  Widget judulBagian(String teks) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 17),
-      child: TextFormField(
-        controller: controller,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: const Color(0xFF648ED0)),
-          filled: true,
-          fillColor: const Color(0xFFF5F8FE),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: BorderSide.none,
-          ),
+      padding: const EdgeInsets.only(bottom: 15, top: 22),
+      child: Text(
+        teks,
+        style: const TextStyle(
+          color: Color(0xFF303B70),
+          fontSize: 17,
+          fontWeight: FontWeight.bold,
         ),
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) {
-            return '$label wajib diisi';
-          }
-          return null;
-        },
       ),
     );
   }
@@ -107,14 +127,18 @@ class _PageTambahSiswaState extends State<PageTambahSiswa> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: latar,
       appBar: AppBar(
+        backgroundColor: biru,
+        foregroundColor: Colors.white,
+        elevation: 0,
         title: const Text(
           'Tambah Siswa',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(22),
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: formKey,
           child: Column(
@@ -122,125 +146,224 @@ class _PageTambahSiswaState extends State<PageTambahSiswa> {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                margin: const EdgeInsets.only(bottom: 25),
+                padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE3EDFF),
-                  borderRadius: BorderRadius.circular(20),
+                  gradient: const LinearGradient(
+                    colors: [biru, ungu],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(21),
                 ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: const Row(
                   children: [
                     Icon(
                       Icons.person_add_alt_1_rounded,
-                      size: 40,
-                      color: Color(0xFF527CC3),
+                      size: 43,
+                      color: Colors.white,
                     ),
-                    SizedBox(height: 12),
-                    Text(
-                      'Tambah Data Siswa',
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF304D78),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Tambah Data Baru',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 21,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 7),
+                          Text(
+                            'Isi informasi siswa dengan lengkap.',
+                            style: TextStyle(
+                              color: Color(0xFFF0EDFF),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Lengkapi informasi siswa di bawah ini.',
-                      style: TextStyle(color: Colors.blueGrey),
                     ),
                   ],
                 ),
               ),
-              kolomInput(
-                label: 'NIPD',
-                controller: nipdController,
-                icon: Icons.badge_outlined,
-              ),
-              kolomInput(
-                label: 'Nama Lengkap',
-                controller: namaController,
-                icon: Icons.person_outline,
-              ),
-              DropdownButtonFormField<String>(
-                value: jenisKelamin,
-                decoration: InputDecoration(
-                  labelText: 'Jenis Kelamin',
-                  prefixIcon: const Icon(
-                    Icons.wc_outlined,
-                    color: Color(0xFF648ED0),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFF5F8FE),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                items: const [
-                  DropdownMenuItem(
-                    value: 'Laki-laki',
-                    child: Text('Laki-laki'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'Perempuan',
-                    child: Text('Perempuan'),
-                  ),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() {
-                      jenisKelamin = value;
-                    });
-                  }
-                },
-              ),
-              const SizedBox(height: 17),
-              kolomInput(
-                label: 'Alamat',
-                controller: alamatController,
-                icon: Icons.location_on_outlined,
-              ),
-              kolomInput(
-                label: 'Kelas',
-                controller: kelasController,
-                icon: Icons.class_outlined,
-              ),
-              kolomInput(
-                label: 'Jurusan',
-                controller: jurusanController,
-                icon: Icons.school_outlined,
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
+
+              const SizedBox(height: 22),
+
+              Container(
                 width: double.infinity,
-                height: 53,
-                child: ElevatedButton.icon(
-                  onPressed: menyimpan ? null : simpanData,
-                  icon: menyimpan
-                      ? const SizedBox(
-                    width: 19,
-                    height: 19,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0EEFF),
+                  borderRadius: BorderRadius.circular(21),
+                  border: Border.all(color: const Color(0xFFD2CEFF)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    judulBagian('Informasi Pribadi'),
+
+                    TextFormField(
+                      controller: nipdController,
+                      keyboardType: TextInputType.text,
+                      decoration: dekorasi(
+                        'NIPD',
+                        Icons.badge_outlined,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'NIPD wajib diisi';
+                        }
+                        return null;
+                      },
                     ),
-                  )
-                      : const Icon(Icons.save_rounded),
-                  label: Text(
-                    menyimpan ? 'Menyimpan...' : 'Simpan Data Siswa',
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF648ED0),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+
+                    const SizedBox(height: 17),
+
+                    TextFormField(
+                      controller: namaController,
+                      textCapitalization: TextCapitalization.words,
+                      decoration: dekorasi(
+                        'Nama Lengkap',
+                        Icons.person_outline_rounded,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Nama lengkap wajib diisi';
+                        }
+                        return null;
+                      },
                     ),
-                  ),
+
+                    const SizedBox(height: 17),
+
+                    DropdownButtonFormField<String>(
+                      value: jenisKelamin,
+                      decoration: dekorasi(
+                        'Jenis Kelamin',
+                        Icons.wc_rounded,
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Laki-laki',
+                          child: Text('Laki-laki'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Perempuan',
+                          child: Text('Perempuan'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() => jenisKelamin = value);
+                      },
+                    ),
+
+                    const SizedBox(height: 17),
+
+                    TextFormField(
+                      controller: alamatController,
+                      maxLines: 3,
+                      textCapitalization: TextCapitalization.sentences,
+                      decoration: dekorasi(
+                        'Alamat',
+                        Icons.location_on_outlined,
+                      ),
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Alamat wajib diisi';
+                        }
+                        return null;
+                      },
+                    ),
+
+                    judulBagian('Informasi Sekolah'),
+
+                    DropdownButtonFormField<String>(
+                      value: kelas,
+                      decoration: dekorasi(
+                        'Kelas',
+                        Icons.class_outlined,
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'X', child: Text('X')),
+                        DropdownMenuItem(value: 'XI', child: Text('XI')),
+                        DropdownMenuItem(value: 'XII', child: Text('XII')),
+                      ],
+                      onChanged: (value) {
+                        setState(() => kelas = value);
+                      },
+                    ),
+
+                    const SizedBox(height: 17),
+
+                    DropdownButtonFormField<String>(
+                      value: jurusan,
+                      decoration: dekorasi(
+                        'Jurusan',
+                        Icons.school_outlined,
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'RPL',
+                          child: Text('Rekayasa Perangkat Lunak (RPL)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'TKJ',
+                          child: Text('Teknik Komputer dan Jaringan (TKJ)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'AKL',
+                          child: Text('Akuntansi (AKL)'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'BIDI',
+                          child: Text('Bisnis Digital (BIDI)'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() => jurusan = value);
+                      },
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton.icon(
+                        onPressed: loading ? null : simpanData,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: biru,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: const Color(0xFF9CAED8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: loading
+                            ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                            : const Icon(Icons.save_rounded),
+                        label: Text(
+                          loading ? 'Menyimpan...' : 'Simpan Data Siswa',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 25),
             ],
           ),
         ),

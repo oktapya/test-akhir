@@ -12,9 +12,12 @@ class PageDataSiswa extends StatefulWidget {
 }
 
 class _PageDataSiswaState extends State<PageDataSiswa> {
-  List<dynamic> dataSiswa = [];
+  static const Color biru = Color(0xFF4263A8);
+  static const Color ungu = Color(0xFF7964C8);
+  static const Color latar = Color(0xFFE8E9FF);
+
+  List<dynamic> daftarSiswa = [];
   bool loading = true;
-  String? pesanError;
 
   @override
   void initState() {
@@ -25,7 +28,6 @@ class _PageDataSiswaState extends State<PageDataSiswa> {
   Future<void> ambilData() async {
     setState(() {
       loading = true;
-      pesanError = null;
     });
 
     try {
@@ -34,7 +36,7 @@ class _PageDataSiswaState extends State<PageDataSiswa> {
       if (!mounted) return;
 
       setState(() {
-        dataSiswa = hasil;
+        daftarSiswa = hasil;
         loading = false;
       });
     } catch (e) {
@@ -42,47 +44,32 @@ class _PageDataSiswaState extends State<PageDataSiswa> {
 
       setState(() {
         loading = false;
-        pesanError = e.toString();
       });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengambil data siswa: $e'),
+          backgroundColor: const Color(0xFFD94355),
+        ),
+      );
     }
   }
 
-  Future<void> tambahSiswa() async {
-    final hasil = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const PageTambahSiswa(),
-      ),
-    );
-
-    if (hasil == true) {
-      await ambilData();
-    }
-  }
-
-  Future<void> editSiswa(Map<String, dynamic> siswa) async {
-    final hasil = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PageEditSiswa(siswa: siswa),
-      ),
-    );
-
-    if (hasil == true) {
-      await ambilData();
-    }
-  }
-
-  Future<void> hapusSiswa(Map<String, dynamic> siswa) async {
+  Future<void> hapusSiswa(dynamic id) async {
     final konfirmasi = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+        backgroundColor: const Color(0xFFF0EEFF),
+        title: const Text(
+          'Hapus Data?',
+          style: TextStyle(
+            color: Color(0xFF303B70),
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        title: const Text('Hapus Data Siswa'),
-        content: Text(
-          'Yakin ingin menghapus ${siswa['nama_lengkap']}?',
+        content: const Text(
+          'Data siswa ini akan dihapus.',
+          style: TextStyle(color: Color(0xFF626A91)),
         ),
         actions: [
           TextButton(
@@ -91,7 +78,7 @@ class _PageDataSiswaState extends State<PageDataSiswa> {
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: const Color(0xFFD94355),
               foregroundColor: Colors.white,
             ),
             onPressed: () => Navigator.pop(context, true),
@@ -104,14 +91,14 @@ class _PageDataSiswaState extends State<PageDataSiswa> {
     if (konfirmasi != true) return;
 
     try {
-      await SiswaServer.hapusData(siswa['id']);
+      await SiswaServer.hapusData(id);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Data siswa berhasil dihapus'),
-          backgroundColor: Colors.green,
+          backgroundColor: biru,
         ),
       );
 
@@ -122,9 +109,35 @@ class _PageDataSiswaState extends State<PageDataSiswa> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Gagal menghapus data: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: const Color(0xFFD94355),
         ),
       );
+    }
+  }
+
+  Future<void> bukaTambah() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PageTambahSiswa(),
+      ),
+    );
+
+    if (mounted) {
+      ambilData();
+    }
+  }
+
+  Future<void> bukaEdit(Map<String, dynamic> siswa) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PageEditSiswa(siswa: siswa),
+      ),
+    );
+
+    if (mounted) {
+      ambilData();
     }
   }
 
@@ -132,408 +145,187 @@ class _PageDataSiswaState extends State<PageDataSiswa> {
     final konfirmasi = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        title: const Text('Logout'),
-        content: const Text(
-          'Apakah kamu yakin ingin keluar dari aplikasi?',
-        ),
+        backgroundColor: const Color(0xFFF0EEFF),
+        title: const Text('Keluar dari aplikasi?'),
+        content: const Text('Kamu akan kembali ke halaman login.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF648ED0),
+              backgroundColor: biru,
               foregroundColor: Colors.white,
             ),
+            onPressed: () => Navigator.pop(context, true),
             child: const Text('Logout'),
           ),
         ],
       ),
     );
 
-    if (konfirmasi != true || !mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const PageLogin(),
-      ),
-          (route) => false,
-    );
-  }
-
-  Widget informasi(IconData icon, String teks) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            icon,
-            size: 19,
-            color: const Color(0xFF648ED0),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              teks,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFF596779),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget kartuSiswa(Map<String, dynamic> siswa) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(17),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFEAF0FA),
+    if (konfirmasi == true && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PageLogin(),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.blueGrey.withOpacity(0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE3EDFF),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: const Icon(
-                  Icons.person_rounded,
-                  size: 30,
-                  color: Color(0xFF527CC3),
-                ),
-              ),
-              const SizedBox(width: 13),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      siswa['nama_lengkap']?.toString() ??
-                          'Tanpa Nama',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF304D78),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      'NIPD: ${siswa['nipd'] ?? '-'}',
-                      style: const TextStyle(
-                        color: Colors.blueGrey,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Menu titik tiga untuk Edit dan Hapus
-              PopupMenuButton<String>(
-                tooltip: 'Pilihan data',
-                icon: const Icon(
-                  Icons.more_vert_rounded,
-                  color: Color(0xFF527CC3),
-                  size: 27,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                onSelected: (pilihan) {
-                  if (pilihan == 'edit') {
-                    editSiswa(
-                      Map<String, dynamic>.from(siswa),
-                    );
-                  } else if (pilihan == 'hapus') {
-                    hapusSiswa(siswa);
-                  }
-                },
-                itemBuilder: (context) => [
-                  const PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.edit_outlined,
-                          color: Color(0xFF527CC3),
-                        ),
-                        SizedBox(width: 12),
-                        Text('Edit Data'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem<String>(
-                    value: 'hapus',
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                        ),
-                        SizedBox(width: 12),
-                        Text('Hapus Data'),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const Divider(height: 28),
-          informasi(
-            Icons.wc_outlined,
-            siswa['jenis_kelamin']?.toString() ?? '-',
-          ),
-          informasi(
-            Icons.location_on_outlined,
-            siswa['alamat']?.toString() ?? '-',
-          ),
-          informasi(
-            Icons.school_outlined,
-            'Kelas ${siswa['kelas'] ?? '-'}'
-                ' • ${siswa['jurusan'] ?? '-'}',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget headerData() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(21),
-      margin: const EdgeInsets.only(bottom: 22),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFFE5EEFF),
-            Color(0xFFF0F5FF),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Data Siswa',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF304D78),
-                      ),
-                    ),
-                    SizedBox(height: 7),
-                    Text(
-                      'Kelola seluruh data siswa di sini.',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF526987),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.groups_rounded,
-                size: 48,
-                color: Color(0xFF527CC3),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.people_alt_outlined,
-                        color: Color(0xFF527CC3),
-                      ),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Text(
-                          '${dataSiswa.length} siswa',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF304D78),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              ElevatedButton.icon(
-                onPressed: tambahSiswa,
-                icon: const Icon(Icons.add, size: 20),
-                label: const Text('Tambah Data'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF648ED0),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 13,
-                    vertical: 15,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
+            (route) => false,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: latar,
       appBar: AppBar(
+        backgroundColor: biru,
+        foregroundColor: Colors.white,
+        elevation: 0,
         title: const Text(
-          'Dashboard Siswa',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          'Data Siswa',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
             onPressed: ambilData,
-            tooltip: 'Muat ulang data',
             icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'Muat ulang',
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: 6),
         ],
       ),
-
-      // Tombol Logout di pojok kanan bawah
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: logout,
-        backgroundColor: const Color(0xFF648ED0),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.logout_rounded),
-        label: const Text('Logout'),
-      ),
-
-      body: loading
-          ? const Center(
-        child: CircularProgressIndicator(),
-      )
-          : pesanError != null
-          ? Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(25),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.cloud_off_rounded,
-                size: 60,
-                color: Colors.blueGrey,
-              ),
-              const SizedBox(height: 15),
-              const Text(
-                'Gagal Memuat Data',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                pesanError!,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 18),
-              ElevatedButton.icon(
-                onPressed: ambilData,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Coba Lagi'),
-              ),
-            ],
-          ),
-        ),
-      )
-          : RefreshIndicator(
+      body: RefreshIndicator(
         onRefresh: ambilData,
+        color: biru,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(
-            18,
-            18,
-            18,
-            100,
-          ),
+          padding: const EdgeInsets.fromLTRB(18, 20, 18, 100),
           children: [
-            headerData(),
-            const Text(
-              'Daftar Siswa',
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF304D78),
+            Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFF4263A8),
+                    Color(0xFF7964C8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Kelola Siswa',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 23,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Data siswa tersimpan di sistem.',
+                          style: TextStyle(
+                            color: Color(0xFFF0EDFF),
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 13,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF304B8A),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${daftarSiswa.length} Data Siswa',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(
+                    Icons.groups_rounded,
+                    size: 65,
+                    color: Color(0xFFDCD7FF),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 14),
-            if (dataSiswa.isEmpty)
+
+            const SizedBox(height: 24),
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'Daftar Siswa',
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF303B70),
+                    ),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: bukaTambah,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: ungu,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 13,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                  ),
+                  icon: const Icon(Icons.add_rounded, size: 20),
+                  label: const Text(
+                    'Tambah',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            if (loading)
+              const Padding(
+                padding: EdgeInsets.all(45),
+                child: Center(
+                  child: CircularProgressIndicator(color: biru),
+                ),
+              )
+            else if (daftarSiswa.isEmpty)
               Container(
                 padding: const EdgeInsets.all(30),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: const Color(0xFFD7E3FF),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Column(
                   children: [
                     Icon(
                       Icons.people_outline_rounded,
-                      size: 60,
-                      color: Color(0xFF8CA5C8),
+                      size: 55,
+                      color: biru,
                     ),
                     SizedBox(height: 14),
                     Text(
@@ -541,28 +333,155 @@ class _PageDataSiswaState extends State<PageDataSiswa> {
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF304D78),
+                        color: Color(0xFF303B70),
                       ),
                     ),
                     SizedBox(height: 7),
                     Text(
-                      'Tekan Tambah Data untuk '
-                          'memasukkan siswa baru.',
+                      'Tekan tombol Tambah untuk memasukkan data baru.',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.blueGrey,
+                        color: Color(0xFF626A91),
                       ),
                     ),
                   ],
                 ),
               )
             else
-              ...dataSiswa.map(
-                    (item) => kartuSiswa(
-                  Map<String, dynamic>.from(item),
-                ),
-              ),
+              ...daftarSiswa.asMap().entries.map((entry) {
+                final index = entry.key;
+                final siswa = Map<String, dynamic>.from(entry.value as Map);
+
+                final warnaKartu = index.isEven
+                    ? const Color(0xFFDCE6FF)
+                    : const Color(0xFFE4DDFF);
+
+                final nama = siswa['nama_lengkap']?.toString() ?? '-';
+                final nipd = siswa['nipd']?.toString() ?? '-';
+                final kelas = siswa['kelas']?.toString() ?? '-';
+                final jurusan = siswa['jurusan']?.toString() ?? '-';
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 13),
+                  decoration: BoxDecoration(
+                    color: warnaKartu,
+                    borderRadius: BorderRadius.circular(19),
+                    border: Border.all(
+                      color: index.isEven
+                          ? const Color(0xFFC1D0FF)
+                          : const Color(0xFFCEC1FF),
+                    ),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(15, 16, 8, 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: index.isEven ? biru : ungu,
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          child: const Icon(
+                            Icons.person_rounded,
+                            color: Colors.white,
+                            size: 29,
+                          ),
+                        ),
+                        const SizedBox(width: 13),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                nama,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF303B70),
+                                ),
+                              ),
+                              const SizedBox(height: 7),
+                              Text(
+                                'NIPD  $nipd',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF505B87),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Kelas $kelas • $jurusan',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF505B87),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuButton<String>(
+                          icon: const Icon(
+                            Icons.more_vert_rounded,
+                            color: Color(0xFF303B70),
+                          ),
+                          color: const Color(0xFFF0EEFF),
+                          onSelected: (pilihan) {
+                            if (pilihan == 'edit') {
+                              bukaEdit(siswa);
+                            } else if (pilihan == 'hapus') {
+                              hapusSiswa(siswa['id']);
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.edit_rounded,
+                                    color: biru,
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text('Edit Data'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'hapus',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.delete_rounded,
+                                    color: Color(0xFFD94355),
+                                    size: 20,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text('Hapus Data'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
           ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: logout,
+        backgroundColor: const Color(0xFFD94355),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.logout_rounded),
+        label: const Text(
+          'Logout',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
     );
